@@ -1,10 +1,15 @@
+"""
+Carga y preprocesado de datos por tipo de dataset.
+Cada loader devuelve (X, y) listo para el modelo correspondiente.
+"""
+
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.preprocessing import StandardScaler
-
+import pyedflib
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 PROJECT_ROOT = DATA_DIR.parent
@@ -19,7 +24,7 @@ def load_breast_cancer(dataset_name: str) -> tuple[np.ndarray, np.ndarray]:
         raise FileNotFoundError(f"No se encontró el dataset: {path}")
     df = pd.read_csv(path)
     to_drop = [c for c in ["id", "Unnamed: 32"] if c in df.columns]
-    df = df.drop(columns=to_drop)
+    df = df.drop(columns=to_drop)  # columnas sin valor para el modelo
     if "diagnosis" in df.columns:
         df["diagnosis"] = df["diagnosis"].map({"M": 1, "B": 0})
     X = df.drop(columns=["diagnosis"])
@@ -54,7 +59,7 @@ def load_movielens_100k(folder_name: str) -> tuple[csr_matrix, np.ndarray]:
     )
     matrix = matrix.astype(float)
     mean_rating = matrix.data.mean()
-    matrix.data -= mean_rating
+    matrix.data -= mean_rating  # centrado para SVD (recomendación brindada)
     users_df = pd.read_csv(
         user_path, sep="|", header=None,
         names=["user_id", "age", "gender", "occupation", "zip"],
@@ -72,6 +77,7 @@ def _eeg_ica_base(folder_name: str) -> Path:
     candidate = DATA_DIR / folder_name
     if candidate.is_dir():
         return candidate
+    # IAC_data puede estar en la raíz del proyecto
     if folder_name == "IAC_data":
         root_candidate = PROJECT_ROOT / "IAC_data"
         if root_candidate.is_dir():
@@ -80,7 +86,6 @@ def _eeg_ica_base(folder_name: str) -> Path:
 
 
 def load_eeg_ica(folder_name: str) -> tuple[np.ndarray, np.ndarray]:
-    import pyedflib
     base = _eeg_ica_base(folder_name)
     info_path = base / "subject-info.csv"
     if not info_path.exists():
@@ -92,7 +97,7 @@ def load_eeg_ica(folder_name: str) -> tuple[np.ndarray, np.ndarray]:
     list_y = []
     for i in range(len(subjects_df)):
         subj_id = subjects_df["Subject"].iloc[i]
-        edf_path = base / f"{subj_id}_2.edf"
+        edf_path = base / f"{subj_id}_2.edf"  # _2 = durante tarea aritmética
         if not edf_path.exists():
             continue
         with pyedflib.EdfReader(str(edf_path)) as f:
@@ -103,7 +108,7 @@ def load_eeg_ica(folder_name: str) -> tuple[np.ndarray, np.ndarray]:
                 sigbufs[ch, :] = f.readSignal(ch)
         X_subj = sigbufs.T
         step = EEG_DOWNSAMPLE_STEP
-        X_subj = X_subj[::step]
+        X_subj = X_subj[::step]  # submuestreo para reducir tamaño y tiempo
         list_X.append(X_subj)
         list_y.append(np.full(X_subj.shape[0], y_per_subject[i]))
     X = np.vstack(list_X)

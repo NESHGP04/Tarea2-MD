@@ -1,3 +1,12 @@
+"""
+UVG - Minería de Datos - Tarea 2 Investigativa
+Modelos no supervisados: t-SNE, UMAP, SVD, ICA
+
+Marinés García 23391
+Camila Richter 23183
+Esteban Cárcamo 23016
+"""
+
 import argparse
 
 from models import MODEL_REGISTRY
@@ -20,17 +29,19 @@ class Main:
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Ejecuta un modelo de reducción de dimensionalidad."
+    )
     parser.add_argument(
         "--model",
         required=True,
         choices=list(MODEL_REGISTRY.keys()),
-        help="Modelo a usar: tsne, umap, svd, ica",
+        help="Modelo: tsne, umap, svd, ica",
     )
     parser.add_argument(
         "--dataset",
         required=True,
-        help="Nombre del archivo CSV en data/ (ej: tSNE_and_UMAP_data.csv)",
+        help="Nombre del dataset en data/ (CSV o carpeta, ej: tSNE_and_UMAP_data.csv)",
     )
     args = parser.parse_args()
     app = Main(model_name=args.model, dataset_name=args.dataset)

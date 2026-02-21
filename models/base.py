@@ -1,3 +1,8 @@
+"""
+Clase base para modelos de reducción/proyección.
+Cada modelo implementa carga de datos, fit_transform y título para el gráfico.
+"""
+
 from abc import ABC, abstractmethod
 from pathlib import Path
 import re
@@ -35,6 +40,7 @@ class BaseModel(ABC):
         name = re.sub(r"[^\w\s-]", "", self.get_title()).strip()
         name = re.sub(r"[-\s]+", "_", name)
         path = OUTPUTS_DIR / f"{name}.png"
+        # Scatter 2D coloreado por etiqueta; cada subclase define get_colorbar_label()
         plt.figure(figsize=(8, 6))
         scatter = plt.scatter(
             X_transformed[:, 0],

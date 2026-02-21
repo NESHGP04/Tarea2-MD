@@ -1,3 +1,5 @@
+"""FastICA sobre EEG (tarea aritmética mental, Count quality como etiqueta)."""
+
 import numpy as np
 from sklearn.decomposition import FastICA
 

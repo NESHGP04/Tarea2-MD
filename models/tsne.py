@@ -1,3 +1,5 @@
+"""t-SNE sobre Breast Cancer (mismo dataset que UMAP)."""
+
 import numpy as np
 from sklearn.manifold import TSNE
 

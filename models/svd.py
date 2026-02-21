@@ -1,3 +1,5 @@
+"""TruncatedSVD sobre MovieLens 100K (matriz usuario-ítem centrada)."""
+
 import numpy as np
 from sklearn.decomposition import TruncatedSVD
 

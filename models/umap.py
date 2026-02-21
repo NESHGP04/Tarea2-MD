@@ -1,3 +1,5 @@
+"""UMAP sobre Breast Cancer (mismo dataset que t-SNE)."""
+
 import numpy as np
 import umap
 
