@@ -20,3 +20,4 @@ six==1.17.0
 threadpoolctl==3.6.0
 tqdm==4.67.3
 umap-learn==0.5.11
+pyedflib==0.1.42

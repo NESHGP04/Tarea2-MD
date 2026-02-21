@@ -7,8 +7,10 @@ from sklearn.preprocessing import StandardScaler
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+PROJECT_ROOT = DATA_DIR.parent
 N_USERS_ML100K = 943
 N_ITEMS_ML100K = 1682
+EEG_DOWNSAMPLE_STEP = 100
 
 
 def load_breast_cancer(dataset_name: str) -> tuple[np.ndarray, np.ndarray]:
@@ -64,3 +66,51 @@ def load_movielens_100k(folder_name: str) -> tuple[csr_matrix, np.ndarray]:
     print("Shape de X (matriz usuario-item):", matrix.shape)
     print("Shape de y:", y.shape)
     return matrix, y
+
+
+def _eeg_ica_base(folder_name: str) -> Path:
+    candidate = DATA_DIR / folder_name
+    if candidate.is_dir():
+        return candidate
+    if folder_name == "IAC_data":
+        root_candidate = PROJECT_ROOT / "IAC_data"
+        if root_candidate.is_dir():
+            return root_candidate
+    raise FileNotFoundError(f"No se encontró la carpeta: {candidate}")
+
+
+def load_eeg_ica(folder_name: str) -> tuple[np.ndarray, np.ndarray]:
+    import pyedflib
+    base = _eeg_ica_base(folder_name)
+    info_path = base / "subject-info.csv"
+    if not info_path.exists():
+        raise FileNotFoundError(f"No se encontró {info_path}")
+    subjects_df = pd.read_csv(info_path)
+    subjects_df["Subject"] = subjects_df["Subject"].astype(str)
+    y_per_subject = subjects_df["Count quality"].values
+    list_X = []
+    list_y = []
+    for i in range(len(subjects_df)):
+        subj_id = subjects_df["Subject"].iloc[i]
+        edf_path = base / f"{subj_id}_2.edf"
+        if not edf_path.exists():
+            continue
+        with pyedflib.EdfReader(str(edf_path)) as f:
+            n_sigs = f.signals_in_file
+            n_samples = f.getNSamples()[0]
+            sigbufs = np.zeros((n_sigs, n_samples))
+            for ch in range(n_sigs):
+                sigbufs[ch, :] = f.readSignal(ch)
+        X_subj = sigbufs.T
+        step = EEG_DOWNSAMPLE_STEP
+        X_subj = X_subj[::step]
+        list_X.append(X_subj)
+        list_y.append(np.full(X_subj.shape[0], y_per_subject[i]))
+    X = np.vstack(list_X)
+    y = np.concatenate(list_y)
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    print(pd.Series(y).value_counts().sort_index())
+    print("Shape de X (EEG, muestras x canales):", X_scaled.shape)
+    print("Shape de y:", y.shape)
+    return X_scaled, y
