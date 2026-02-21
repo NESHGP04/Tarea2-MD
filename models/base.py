@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
+import re
 import numpy as np
+import matplotlib.pyplot as plt
+
+OUTPUTS_DIR = Path(__file__).resolve().parent.parent / "outputs"
 
 
 class BaseModel(ABC):
@@ -23,7 +28,10 @@ class BaseModel(ABC):
         return X_transformed
 
     def _plot(self, X_transformed: np.ndarray, y: np.ndarray) -> None:
-        import matplotlib.pyplot as plt
+        OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+        name = re.sub(r"[^\w\s-]", "", self.get_title()).strip()
+        name = re.sub(r"[-\s]+", "_", name)
+        path = OUTPUTS_DIR / f"{name}.png"
         plt.figure(figsize=(8, 6))
         scatter = plt.scatter(
             X_transformed[:, 0],
@@ -34,4 +42,6 @@ class BaseModel(ABC):
         plt.xlabel("Componente 1")
         plt.ylabel("Componente 2")
         plt.colorbar(scatter, label="Diagnosis (0=Benigno, 1=Maligno)")
-        plt.show()
+        plt.savefig(path, dpi=150, bbox_inches="tight")
+        plt.close()
+        print(f"Gráfico guardado: {path}")
