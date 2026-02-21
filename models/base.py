@@ -20,6 +20,9 @@ class BaseModel(ABC):
     def get_title(self) -> str:
         pass
 
+    def get_colorbar_label(self) -> str:
+        return "Diagnosis (0=Benigno, 1=Maligno)"
+
     def run(self, dataset_name: str) -> np.ndarray:
         X, y = self._load_and_preprocess(dataset_name)
         X_transformed = self.fit_transform(X)
@@ -41,7 +44,7 @@ class BaseModel(ABC):
         plt.title(self.get_title())
         plt.xlabel("Componente 1")
         plt.ylabel("Componente 2")
-        plt.colorbar(scatter, label="Diagnosis (0=Benigno, 1=Maligno)")
+        plt.colorbar(scatter, label=self.get_colorbar_label())
         plt.savefig(path, dpi=150, bbox_inches="tight")
         plt.close()
         print(f"Gráfico guardado: {path}")
